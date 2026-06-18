@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja" style="background:#ffffff; color-scheme:light;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<title>BIG5 パーソナリティ探索</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* ダークモード強制無効化 */
+  html, body, #root {
+    color-scheme: light !important;
+    background-color: #ffffff !important;
+    color: #111111 !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    html, body {
+      background-color: #ffffff !important;
+      color: #111111 !important;
+    }
+  }
+
+  :root {
+    color-scheme: light !important;
+    --openness: #E05A6A;
+    --extraversion: #F5933A;
+    --conscientiousness: #A8CC4A;
+    --neuroticism: #4ABDE0;
+    --agreeableness: #8B5FC5;
+    --bg: #ffffff;
+    --surface: #F2F2F7;
+    --surface2: #E5E5EA;
+    --text: #111111;
+    --text-dim: #888888;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  header {
+    text-align: center;
+    padding: 28px 20px 12px;
+  }
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #000000;
+  }
+  header p {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ===== WHEEL ===== */
+  #wheel-container {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    margin: 16px auto 0;
+    flex-shrink: 0;
+  }
+  #wheel-svg {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  .trait-slice {
+    transition: opacity 0.25s, filter 0.25s;
+  }
+  .trait-slice:hover { filter: brightness(1.15); }
+  .trait-slice.active { filter: brightness(1.2) drop-shadow(0 0 8px rgba(255,255,255,0.3)); }
+  .trait-slice.dimmed { opacity: 0.3; }
+
+  /* center circle */
+  #center-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 76px; height: 76px;
+    background: var(--bg);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: all 0.3s;
+    border: 2px solid #DDDDDD;
+  }
+  #center-label .num {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  #center-label .label-txt {
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  /* ===== FACET PANEL ===== */
+  #facet-panel {
+    width: 100%;
+    max-width: 380px;
+    padding: 0 16px 16px;
+    flex: 1;
+  }
+
+  #panel-header {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 0 10px;
+    cursor: pointer;
+  }
+  #panel-header.visible { display: flex; }
+  #panel-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  #panel-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #000000;
+  }
+  #back-btn {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: #555555;
+    background: #EEEEEE;
+    border: none;
+    border-radius: 20px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  #back-btn:hover { background: #DDDDDD; }
+
+  #panel-desc {
+    font-size: 0.78rem;
+    color: #333333;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    display: none;
+  }
+  #panel-desc.visible { display: block; }
+
+  /* Facet Cards */
+  #facets-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .facet-card {
+    background: var(--accent);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: border-color 0.2s, filter 0.2s, transform 0.15s;
+    animation: slideIn 0.3s ease both;
+  }
+  .facet-card:hover {
+    filter: brightness(1.1);
+    transform: translateX(3px);
+  }
+  .facet-card.expanded {
+    filter: brightness(1.15);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .facet-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .facet-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  .facet-arrow {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    transition: transform 0.25s;
+  }
+  .facet-card.expanded .facet-arrow { transform: rotate(90deg); }
+
+  .facet-detail {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.25);
+    animation: fadeIn 0.25s ease;
+  }
+  .facet-card.expanded .facet-detail { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .facet-tagline {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.55;
+    margin-bottom: 10px;
+  }
+
+  .level-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .level-box {
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .level-box.high { background: rgba(255,255,255,0.2); }
+  .level-box.low  { background: rgba(0,0,0,0.15); }
+  .level-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+    color: rgba(255,255,255,0.95);
+  }
+  .level-text {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.9);
+    line-height: 1.5;
+  }
+
+  /* Hint at bottom */
+  #hint {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    padding: 20px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  #hint.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BIG FIVE</h1>
+  <p>パーソナリティ探索ツール</p>
+</header>
+
+<div id="wheel-container">
+  <svg id="wheel-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="center-label">
+    <span class="num">5</span>
+    <span class="label-txt">TRAITS</span>
+  </div>
+</div>
+
+<p id="hint">各特性をタップして探索 ↑</p>
+
+<div id="facet-panel">
+  <div id="panel-header">
+    <div id="panel-dot"></div>
+    <span id="panel-title"></span>
+    <button id="back-btn">← 戻る</button>
+  </div>
+  <p id="panel-desc"></p>
+  <div id="facets-grid"></div>
+</div>
+
+<script>
+const DATA = {
+  openness: {
+    name: "開放性",
+    color: "#E05A6A",
+    icon: "🌈",
+    description: "新しい経験・アイデア・美的感覚への好奇心と受容性。高いほど創造的で冒険的、低いほど実用的で安定志向。",
+    facets: [
+      { name: "想像力", icon: "💭", desc: "豊かなファンタジーと内的世界",
+        high: "空想が豊かで、頭の中に生き生きとした内的世界を持つ。妄想や白昼夢を楽しむ。",
+        low: "現実志向で、空想より事実を重視する。実際に起きていることに集中する。" },
+      { name: "審美性", icon: "🎨", desc: "芸術・音楽・詩への感受性",
+        high: "音楽・絵画・詩などに深く感動し、美しさを鑑賞する能力が高い。",
+        low: "芸術や美に大きな興味を持たず、実用性を優先することが多い。" },
+      { name: "感情豊かさ", icon: "🎭", desc: "自分の内側の感情への気づきと深み",
+        high: "自分の感情に鋭く気づき、喜怒哀楽を深く感じる。感情的知性が高い。",
+        low: "感情にそれほど注意を払わず、感情的な変動が小さい傾向がある。" },
+      { name: "冒険心", icon: "🗺️", desc: "新しい活動・場所・食への探求欲",
+        high: "慣れないことに進んで挑戦し、変化を楽しむ。ルーティンより刺激を求める。",
+        low: "慣れ親しんだものを好み、変化を避ける傾向がある。安定を心地よく感じる。" },
+      { name: "知的好奇心", icon: "🔬", desc: "抽象的アイデアと哲学への関心",
+        high: "哲学・科学・抽象概念を掘り下げることを楽しむ。議論や思考実験が好き。",
+        low: "実用的な知識を好み、抽象的な理論には興味が薄い傾向がある。" },
+      { name: "革新性", icon: "🔧", desc: "権威や慣習への問い直し",
+        high: "既成概念に疑問を持ち、社会的・政治的・倫理的な多様な価値観を受け入れる。",
+        low: "慣習や伝統を大切にし、既存のシステムや権威を尊重する傾向がある。" }
+    ]
+  },
+  extraversion: {
+    name: "外向性",
+    color: "#F5933A",
+    icon: "⚡",
+    description: "社会的交流からエネルギーを得る傾向。高いほど積極的・社交的、低いほど内省的・単独志向。",
+    facets: [
+      { name: "温かさ", icon: "🤝", desc: "他者への親しみやすさと親密さ",
+        high: "人に気軽に話しかけ、すぐに打ち解ける。人を温かく迎え入れる。",
+        low: "打ち解けるまでに時間がかかり、最初は距離を置きがちになる。" },
+      { name: "群居性", icon: "👥", desc: "大勢の人と一緒にいることの好み",
+        high: "にぎやかな集まりを楽しみ、人が多い場所でエネルギーを得る。",
+        low: "大人数より少人数や一人の時間を好む。群衆に圧倒されることがある。" },
+      { name: "自己主張", icon: "📢", desc: "意見を積極的に発信する傾向",
+        high: "リーダーシップを取り、意見をはっきり伝える。グループの中心になりやすい。",
+        low: "自分から前に出ず、他者の意見を尊重しながら控えめに行動する。" },
+      { name: "活動性", icon: "🏃", desc: "エネルギーレベルとテンポの速さ",
+        high: "常に動いていたく、テキパキと行動する。忙しいことを好む。",
+        low: "ゆっくりしたペースを好み、のんびりとした時間を心地よく感じる。" },
+      { name: "刺激希求性", icon: "🎢", desc: "興奮・スリル・リスクへの欲求",
+        high: "スリルや冒険を求め、刺激の少ない状況に退屈を感じやすい。",
+        low: "穏やかな環境を好み、過度の刺激を避ける傾向がある。" },
+      { name: "肯定的感情", icon: "😄", desc: "喜び・楽しさ・興奮の感じやすさ",
+        high: "笑顔が多く、楽観的で明るい感情を頻繁に経験する。",
+        low: "感情的に落ち着いており、大きな喜びより静かな満足感を感じる。" }
+    ]
+  },
+  conscientiousness: {
+    name: "誠実性",
+    color: "#A8CC4A",
+    icon: "🎯",
+    description: "目標に向けて計画し、自己コントロールする能力。高いほど勤勉・組織的、低いほど柔軟・自発的。",
+    facets: [
+      { name: "有能感", icon: "💪", desc: "自分の能力・有能さへの確信",
+        high: "自分は有能で物事をうまくやれると信じている。自己効力感が高い。",
+        low: "自信が持ちにくく、自分の判断を疑いがちになることがある。" },
+      { name: "秩序性", icon: "📋", desc: "整理整頓と体系的な行動",
+        high: "身の回りを整理し、計画立てて行動する。几帳面で細かいことに気を配る。",
+        low: "整理が苦手で雑然とした環境でも気にしない。自由な流れを好む。" },
+      { name: "誠実性", icon: "✅", desc: "義務感と責任を果たす意志",
+        high: "約束や義務を忠実に守る。倫理的な規範を重んじ、責任感が強い。",
+        low: "規則や義務に縛られることを窮屈に感じ、状況に合わせて柔軟に対応する。" },
+      { name: "達成志向", icon: "🏆", desc: "高い目標に向けて努力する動機",
+        high: "高い目標を設定し、それに向けてひたむきに努力する。成功への意欲が強い。",
+        low: "過度な野心はなく、現状に満足できる。ほどほどを心地よく感じる。" },
+      { name: "自己規律", icon: "⏰", desc: "タスクを最後までやり遂げる力",
+        high: "面倒でも課題をやり遂げる。気が散っても軌道に戻れる自制心がある。",
+        low: "退屈なことへの集中が続きにくく、途中で放り出してしまうことがある。" },
+      { name: "慎重性", icon: "🔍", desc: "行動前によく考える思慮深さ",
+        high: "行動する前に十分に考え、衝動的な決断を避ける。リスクを慎重に評価する。",
+        low: "直感で素早く行動し、後で考える傾向がある。勢いを大切にする。" }
+    ]
+  },
+  neuroticism: {
+    name: "精神安定性",
+    color: "#4ABDE0",
+    icon: "🌊",
+    description: "感情的な安定性・不安定さの度合い。スコアが高いほど安定・穏やか、低いほど不安や感情の波が大きい。",
+    facets: [
+      { name: "不安", icon: "😰", desc: "心配・緊張・危機感の傾向",
+        high: "不安をあまり感じず、リラックスして物事に臨める。動じにくい。",
+        low: "心配事が多く、将来のことで緊張したり、危機感を感じやすかったりする。" },
+      { name: "怒りっぽさ", icon: "😤", desc: "欲求不満・苛立ちへの感受性",
+        high: "感情的な揺れが少なく、挫折や苛立ちに冷静に対処できる。",
+        low: "思い通りにいかないと苛立ちやすく、感情が表に出やすい。" },
+      { name: "抑うつ性", icon: "🌧️", desc: "悲しみ・落ち込みやすさ",
+        high: "気分が安定しており、落ち込んでも立ち直りが早い。",
+        low: "悲しみや後悔、孤独感を感じやすく、気分の落ち込みを経験しやすい。" },
+      { name: "自意識", icon: "🪞", desc: "他者の目を気にする傾向",
+        high: "他人の評価に左右されにくく、自分の軸を持って行動できる。",
+        low: "周囲の視線を意識しすぎたり、恥ずかしいと感じやすい場面が多い。" },
+      { name: "衝動性", icon: "⚡", desc: "誘惑に負けやすい傾向",
+        high: "誘惑に流されにくく、欲求をコントロールできる。",
+        low: "欲求や衝動に抵抗しにくく、その場の気分で行動することがある。" },
+      { name: "傷つきやすさ", icon: "🫧", desc: "ストレス下での脆弱さ",
+        high: "プレッシャー下でも落ち着いており、状況をコントロールできる感覚を保てる。",
+        low: "強いストレス下でパニックになったり、無力感を感じやすかったりする。" }
+    ]
+  },
+  agreeableness: {
+    name: "協調性",
+    color: "#8B5FC5",
+    icon: "💜",
+    description: "他者への共感・思いやり・協力の度合い。高いほど温和・利他的、低いほど競争的・懐疑的。",
+    facets: [
+      { name: "信頼性", icon: "🤲", desc: "他者への基本的な信頼の傾向",
+        high: "人の善意を信じ、他者を誠実で正直だと見なしやすい。",
+        low: "他者の動機を疑いがちで、信頼するには確証が必要。慎重に関係を築く。" },
+      { name: "実直性", icon: "💎", desc: "誠実さ・正直さへのこだわり",
+        high: "正直に率直に伝えることを大切にし、欺くことを嫌う。",
+        low: "社会的状況に合わせて情報を調整することをいとわない。戦略的な面がある。" },
+      { name: "利他性", icon: "🎁", desc: "他者を助けることへの動機",
+        high: "他者の役に立つことに喜びを感じ、進んで手助けをする。",
+        low: "他者より自分のニーズを優先する傾向があり、頼まれない限り積極的には助けない。" },
+      { name: "協力性", icon: "🤜", desc: "対立を避け妥協する意志",
+        high: "衝突を避け、対立より調和を好む。柔軟に妥協できる。",
+        low: "意見の不一致があると対立することをいとわず、主張をはっきり伝える。" },
+      { name: "謙虚さ", icon: "🙏", desc: "自分を低く見せる傾向",
+        high: "控えめで、自分の実績を誇示せず、自慢を避ける。",
+        low: "自分の能力や実績に自信を持ち、堂々と自己主張する。" },
+      { name: "優しさ", icon: "💖", desc: "他者の感情への共感・気遣い",
+        high: "他者の感情に敏感で、困っている人を見ると放っておけない。",
+        low: "感情より論理・客観性を優先する。同情よりも現実的な判断を下しやすい。" }
+    ]
+  }
+};
+
+const TRAITS = ['openness','extraversion','conscientiousness','neuroticism','agreeableness'];
+const TRAIT_NAMES_SHORT = { openness:'開放性', extraversion:'外向性', conscientiousness:'誠実性', neuroticism:'精神安定性', agreeableness:'協調性' };
+
+let activeTraitKey = null;
+let expandedFacetIndex = null;
+
+// ===== Draw SVG Wheel =====
+function buildWheel() {
+  const svg = document.getElementById('wheel-svg');
+  const cx = 160, cy = 160;
+  const outerR = 150, innerR = 44, gap = 3;
+  const n = TRAITS.length;
+  const anglePerSlice = (2 * Math.PI) / n;
+  const startOffset = -Math.PI / 2;
+
+  TRAITS.forEach((key, i) => {
+    const trait = DATA[key];
+    const startAngle = startOffset + i * anglePerSlice + gap / outerR;
+    const endAngle = startOffset + (i + 1) * anglePerSlice - gap / outerR;
+
+    const x1 = cx + outerR * Math.cos(startAngle);
+    const y1 = cy + outerR * Math.sin(startAngle);
+    const x2 = cx + outerR * Math.cos(endAngle);
+    const y2 = cy + outerR * Math.sin(endAngle);
+    const x3 = cx + innerR * Math.cos(endAngle);
+    const y3 = cy + innerR * Math.sin(endAngle);
+    const x4 = cx + innerR * Math.cos(startAngle);
+    const y4 = cy + innerR * Math.sin(startAngle);
+
+    const d = `M ${x1} ${y1} A ${outerR} ${outerR} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 0 0 ${x4} ${y4} Z`;
+
+    const midAngle = startOffset + (i + 0.5) * anglePerSlice;
+    const labelR = (outerR + innerR) / 2;
+    const lx = cx + labelR * Math.cos(midAngle);
+    const ly = cy + labelR * Math.sin(midAngle);
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'trait-slice');
+    g.setAttribute('data-key', key);
+    g.style.cursor = 'pointer';
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', trait.color);
+    g.appendChild(path);
+
+    // Label text (split long names)
+    const name = TRAIT_NAMES_SHORT[key];
+    const lines = name.length > 4 ? [name.slice(0,3), name.slice(3)] : [name];
+    lines.forEach((line, li) => {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', lx);
+      t.setAttribute('y', ly + (li - (lines.length - 1) / 2) * 16);
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('dominant-baseline', 'middle');
+      t.setAttribute('fill', '#fff');
+      t.setAttribute('font-size', '13');
+      t.setAttribute('font-weight', '700');
+      t.setAttribute('font-family', 'Hiragino Kaku Gothic ProN, sans-serif');
+      t.setAttribute('pointer-events', 'none');
+      t.textContent = line;
+      g.appendChild(t);
+    });
+
+    g.addEventListener('click', () => selectTrait(key));
+    svg.appendChild(g);
+  });
+}
+
+function selectTrait(key) {
+  if (activeTraitKey === key) {
+    clearSelection();
+    return;
+  }
+  activeTraitKey = key;
+  expandedFacetIndex = null;
+
+  // Update slices
+  document.querySelectorAll('.trait-slice').forEach(g => {
+    const k = g.getAttribute('data-key');
+    g.classList.toggle('active', k === key);
+    g.classList.toggle('dimmed', k !== key);
+  });
+
+  // Center label
+  const trait = DATA[key];
+  const centerLabel = document.getElementById('center-label');
+  centerLabel.style.borderColor = trait.color;
+  centerLabel.querySelector('.num').textContent = '6';
+  centerLabel.querySelector('.num').style.color = trait.color;
+  centerLabel.querySelector('.label-txt').textContent = 'FACETS';
+
+  // Panel
+  const header = document.getElementById('panel-header');
+  header.classList.add('visible');
+  document.getElementById('panel-dot').style.background = trait.color;
+  document.getElementById('panel-title').textContent = trait.name;
+  const descEl = document.getElementById('panel-desc');
+  descEl.textContent = trait.description;
+  descEl.classList.add('visible');
+
+  document.getElementById('hint').classList.add('hidden');
+
+  renderFacets(key);
+  document.getElementById('facet-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function clearSelection() {
+  activeTraitKey = null;
+  expandedFacetIndex = null;
+  document.querySelectorAll('.trait-slice').forEach(g => {
+    g.classList.remove('active', 'dimmed');
+  });
+  const centerLabel = document.getElementById('center-label');
+  centerLabel.style.borderColor = '';
+  centerLabel.querySelector('.num').textContent = '5';
+  centerLabel.querySelector('.num').style.color = '';
+  centerLabel.querySelector('.label-txt').textContent = 'TRAITS';
+  document.getElementById('panel-header').classList.remove('visible');
+  document.getElementById('panel-desc').classList.remove('visible');
+  document.getElementById('facets-grid').innerHTML = '';
+  document.getElementById('hint').classList.remove('hidden');
+}
+
+function renderFacets(key) {
+  const trait = DATA[key];
+  const grid = document.getElementById('facets-grid');
+  grid.innerHTML = '';
+
+  // Set CSS accent
+  document.documentElement.style.setProperty('--accent', trait.color);
+
+  trait.facets.forEach((facet, i) => {
+    const card = document.createElement('div');
+    card.className = 'facet-card';
+    card.style.animationDelay = `${i * 50}ms`;
+
+    card.innerHTML = `
+      <div class="facet-card-header">
+        <span class="facet-name">${facet.name}</span>
+        <span class="facet-arrow">▶</span>
+      </div>
+      <div class="facet-detail">
+        <p class="facet-tagline">${facet.desc}</p>
+        <div class="level-row">
+          <div class="level-box high">
+            <div class="level-label">▲ 高い人</div>
+            <div class="level-text">${facet.high}</div>
+          </div>
+          <div class="level-box low">
+            <div class="level-label">▼ 低い人</div>
+            <div class="level-text">${facet.low}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      const wasExpanded = card.classList.contains('expanded');
+      grid.querySelectorAll('.facet-card').forEach(c => c.classList.remove('expanded'));
+      if (!wasExpanded) card.classList.add('expanded');
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById('back-btn').addEventListener('click', clearSelection);
+
+buildWheel();
+</script>
+</body>
+</html>
