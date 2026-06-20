@@ -51,16 +51,10 @@
     padding: 28px 20px 12px;
   }
   header h1 {
-    font-size: 1.5rem;
+    font-size: 2.2rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     color: #000000;
-  }
-  header p {
-    font-size: 0.78rem;
-    color: var(--text-dim);
-    margin-top: 4px;
-    letter-spacing: 0.05em;
   }
 
   /* ===== WHEEL ===== */
@@ -166,6 +160,11 @@
     flex-direction: column;
     gap: 8px;
   }
+  #facets-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
   .facet-card {
     background: var(--accent);
@@ -173,20 +172,24 @@
     padding: 12px 14px;
     cursor: pointer;
     border: 1.5px solid transparent;
-    transition: border-color 0.2s, filter 0.2s, transform 0.15s;
-    animation: slideIn 0.3s ease both;
+    animation: slideIn 0.25s ease both;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
-  .facet-card:hover {
-    filter: brightness(1.1);
-    transform: translateX(3px);
-  }
+  .facet-card:active { filter: brightness(1.08); }
+
+  /* 展開時：常時ハイライト */
   .facet-card.expanded {
-    filter: brightness(1.15);
+    filter: brightness(1.12);
   }
 
   @keyframes slideIn {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-10px); }
   }
 
   .facet-card-header {
@@ -197,28 +200,46 @@
   .facet-name {
     font-size: 0.92rem;
     font-weight: 600;
+    color: rgba(255,255,255,0.78);
+    transition: color 0.25s;
+    text-decoration: none;
+    border-bottom: none;
+    outline: none;
+    -webkit-user-select: none;
+  }
+  /* 展開時は文字を白く（常時） */
+  .facet-card.expanded .facet-name {
     color: #ffffff;
   }
+
   .facet-arrow {
     margin-left: auto;
     font-size: 0.8rem;
     color: rgba(255,255,255,0.7);
-    transition: transform 0.25s;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .facet-card.expanded .facet-arrow { transform: rotate(90deg); }
 
+  /* ファセット詳細：max-heightで展開/収縮 */
   .facet-detail {
-    display: none;
+    max-height: 0;
+    overflow: hidden;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    transition:
+      max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      margin-top 0.35s ease,
+      padding-top 0.35s ease;
+  }
+  .facet-card.expanded .facet-detail {
+    max-height: 500px;
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid rgba(255,255,255,0.25);
-    animation: fadeIn 0.25s ease;
-  }
-  .facet-card.expanded .facet-detail { display: block; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    transition:
+      max-height 0.35s cubic-bezier(0, 0, 0.2, 1),
+      margin-top 0.35s ease,
+      padding-top 0.35s ease;
   }
 
   .facet-tagline {
@@ -237,7 +258,7 @@
     border-radius: 8px;
     padding: 8px 10px;
   }
-  .level-box.high { background: rgba(255,255,255,0.2); }
+  .level-box.high { background: rgba(255,255,255,0.22); }
   .level-box.low  { background: rgba(0,0,0,0.15); }
   .level-label {
     font-size: 0.65rem;
@@ -281,7 +302,7 @@
   </div>
 </div>
 
-<p id="hint">各項目をタップ ↑</p>
+<p id="hint">各項目をタップして詳しく見る ↑</p>
 
 <div id="facet-panel">
   <div id="panel-header">
@@ -546,7 +567,123 @@ function selectTrait(key) {
       centerLabel.querySelector('.num').textContent = '5';
       centerLabel.querySelector('.num').style.color = '';
       centerLabel.querySelector('.label-txt').textContent = 'TRAITS';
-  …
+      document.getElementById('panel-header').classList.remove('visible');
+      document.getElementById('panel-desc').classList.remove('visible');
+      document.getElementById('hint').classList.remove('hidden');
+    });
+    return;
+  }
+
+  const doSelect = () => {
+    activeTraitKey = key;
+    expandedFacetIndex = null;
+
+    document.querySelectorAll('.trait-slice').forEach(g => {
+      const k = g.getAttribute('data-key');
+      g.classList.toggle('active', k === key);
+      g.classList.toggle('dimmed', k !== key);
+    });
+
+    const trait = DATA[key];
+    const centerLabel = document.getElementById('center-label');
+    centerLabel.style.borderColor = trait.color;
+    centerLabel.querySelector('.num').textContent = '6';
+    centerLabel.querySelector('.num').style.color = trait.color;
+    centerLabel.querySelector('.label-txt').textContent = 'FACETS';
+
+    const header = document.getElementById('panel-header');
+    header.classList.add('visible');
+    document.getElementById('panel-dot').style.background = trait.color;
+    document.getElementById('panel-title').textContent = trait.name;
+    const descEl = document.getElementById('panel-desc');
+    descEl.textContent = trait.description;
+    descEl.classList.add('visible');
+
+    document.getElementById('hint').classList.add('hidden');
+
+    renderFacets(key);
+    document.getElementById('facet-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  if (activeTraitKey) {
+    // 別の因子タップ → 即座にグリッドをクリアして切り替え（収縮モーションなし）
+    document.getElementById('facets-grid').innerHTML = '';
+    doSelect();
+  } else {
+    doSelect();
+  }
+}
+
+function clearSelection() {
+  // 戻るボタン → 収縮モーション付きで閉じてからトップへ戻る
+  collapseGrid(() => {
+    activeTraitKey = null;
+    expandedFacetIndex = null;
+    document.querySelectorAll('.trait-slice').forEach(g => g.classList.remove('active', 'dimmed'));
+    const centerLabel = document.getElementById('center-label');
+    centerLabel.style.borderColor = '';
+    centerLabel.querySelector('.num').textContent = '5';
+    centerLabel.querySelector('.num').style.color = '';
+    centerLabel.querySelector('.label-txt').textContent = 'TRAITS';
+    document.getElementById('panel-header').classList.remove('visible');
+    document.getElementById('panel-desc').classList.remove('visible');
+    document.getElementById('hint').classList.remove('hidden');
+  });
+}
+
+function renderFacets(key) {
+  const trait = DATA[key];
+  const grid = document.getElementById('facets-grid');
+  grid.innerHTML = '';
+
+  // Set CSS accent
+  document.documentElement.style.setProperty('--accent', trait.color);
+
+  trait.facets.forEach((facet, i) => {
+    const card = document.createElement('div');
+    card.className = 'facet-card';
+    card.style.animationDelay = `${i * 50}ms`;
+
+    card.innerHTML = `
+      <div class="facet-card-header">
+        <span class="facet-name">${facet.name}</span>
+        <span class="facet-arrow">▶</span>
+      </div>
+      <div class="facet-detail">
+        <p class="facet-tagline">${facet.desc}</p>
+        <div class="level-row">
+          <div class="level-box high">
+            <div class="level-label">▲ 高い人</div>
+            <div class="level-text">${facet.high}</div>
+          </div>
+          <div class="level-box low">
+            <div class="level-label">▼ 低い人</div>
+            <div class="level-text">${facet.low}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      const wasExpanded = card.classList.contains('expanded');
+      const currentExpanded = grid.querySelector('.facet-card.expanded');
+
+      if (currentExpanded && currentExpanded !== card) {
+        // 別のカードが開いている → 先に閉じてから開く
+        currentExpanded.classList.remove('expanded');
+        setTimeout(() => {
+          if (!wasExpanded) card.classList.add('expanded');
+        }, 200);
+      } else {
+        // 同じカード or 何も開いていない → 即トグル
+        if (!wasExpanded) card.classList.add('expanded');
+        else card.classList.remove('expanded');
+      }
+    });
+
+    grid.appendChild(card);
+  });
+}
 
 document.getElementById('back-btn').addEventListener('click', clearSelection);
 
