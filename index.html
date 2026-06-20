@@ -496,103 +496,57 @@ function buildWheel() {
   });
 }
 
+// 下から上へ順番にmax-heightで畳む（スペースが縮んで画面が自然に上に戻る）
+function collapseGrid(callback) {
+  const grid = document.getElementById('facets-grid');
+  const cards = Array.from(grid.children);
+  if (!cards.length) { callback(); return; }
+
+  // 開いているファセット詳細を先に閉じる
+  grid.querySelectorAll('.facet-card.expanded').forEach(c => c.classList.remove('expanded'));
+
+  const stagger = 60;   // カード間の遅延
+  const duration = 250; // 各カードの収縮時間
+
+  cards.forEach((card, i) => {
+    const reverseIndex = cards.length - 1 - i; // 下から順
+    const delay = reverseIndex * stagger;
+
+    // 現在の高さを固定してからmax-height:0へ
+    const h = card.offsetHeight;
+    card.style.overflow = 'hidden';
+    card.style.maxHeight = h + 'px';
+    card.style.marginBottom = '0';
+    card.style.transition = 'none';
+
+    setTimeout(() => {
+      card.style.transition = `max-height ${duration}ms cubic-bezier(0.4, 0, 1, 1), margin-top ${duration}ms ease, opacity ${duration}ms ease`;
+      card.style.maxHeight = '0';
+      card.style.marginTop = '0';
+      card.style.opacity = '0';
+    }, delay);
+  });
+
+  const totalTime = (cards.length - 1) * stagger + duration;
+  setTimeout(() => {
+    grid.innerHTML = '';
+    callback();
+  }, totalTime + 50);
+}
+
 function selectTrait(key) {
   if (activeTraitKey === key) {
-    clearSelection();
-    return;
-  }
-  activeTraitKey = key;
-  expandedFacetIndex = null;
-
-  // Update slices
-  document.querySelectorAll('.trait-slice').forEach(g => {
-    const k = g.getAttribute('data-key');
-    g.classList.toggle('active', k === key);
-    g.classList.toggle('dimmed', k !== key);
-  });
-
-  // Center label
-  const trait = DATA[key];
-  const centerLabel = document.getElementById('center-label');
-  centerLabel.style.borderColor = trait.color;
-  centerLabel.querySelector('.num').textContent = '6';
-  centerLabel.querySelector('.num').style.color = trait.color;
-  centerLabel.querySelector('.label-txt').textContent = 'FACETS';
-
-  // Panel
-  const header = document.getElementById('panel-header');
-  header.classList.add('visible');
-  document.getElementById('panel-dot').style.background = trait.color;
-  document.getElementById('panel-title').textContent = trait.name;
-  const descEl = document.getElementById('panel-desc');
-  descEl.textContent = trait.description;
-  descEl.classList.add('visible');
-
-  document.getElementById('hint').classList.add('hidden');
-
-  renderFacets(key);
-  document.getElementById('facet-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function clearSelection() {
-  activeTraitKey = null;
-  expandedFacetIndex = null;
-  document.querySelectorAll('.trait-slice').forEach(g => {
-    g.classList.remove('active', 'dimmed');
-  });
-  const centerLabel = document.getElementById('center-label');
-  centerLabel.style.borderColor = '';
-  centerLabel.querySelector('.num').textContent = '5';
-  centerLabel.querySelector('.num').style.color = '';
-  centerLabel.querySelector('.label-txt').textContent = 'TRAITS';
-  document.getElementById('panel-header').classList.remove('visible');
-  document.getElementById('panel-desc').classList.remove('visible');
-  document.getElementById('facets-grid').innerHTML = '';
-  document.getElementById('hint').classList.remove('hidden');
-}
-
-function renderFacets(key) {
-  const trait = DATA[key];
-  const grid = document.getElementById('facets-grid');
-  grid.innerHTML = '';
-
-  // Set CSS accent
-  document.documentElement.style.setProperty('--accent', trait.color);
-
-  trait.facets.forEach((facet, i) => {
-    const card = document.createElement('div');
-    card.className = 'facet-card';
-    card.style.animationDelay = `${i * 50}ms`;
-
-    card.innerHTML = `
-      <div class="facet-card-header">
-        <span class="facet-name">${facet.name}</span>
-        <span class="facet-arrow">▶</span>
-      </div>
-      <div class="facet-detail">
-        <p class="facet-tagline">${facet.desc}</p>
-        <div class="level-row">
-          <div class="level-box high">
-            <div class="level-label">▲ 高い人</div>
-            <div class="level-text">${facet.high}</div>
-          </div>
-          <div class="level-box low">
-            <div class="level-label">▼ 低い人</div>
-            <div class="level-text">${facet.low}</div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    card.addEventListener('click', () => {
-      const wasExpanded = card.classList.contains('expanded');
-      grid.querySelectorAll('.facet-card').forEach(c => c.classList.remove('expanded'));
-      if (!wasExpanded) card.classList.add('expanded');
-    });
-
-    grid.appendChild(card);
-  });
-}
+    // 同じ因子タップ → 収縮モーション付きで閉じてからトップへ戻る
+    collapseGrid(() => {
+      activeTraitKey = null;
+      expandedFacetIndex = null;
+      document.querySelectorAll('.trait-slice').forEach(g => g.classList.remove('active','dimmed'));
+      const centerLabel = document.getElementById('center-label');
+      centerLabel.style.borderColor = '';
+      centerLabel.querySelector('.num').textContent = '5';
+      centerLabel.querySelector('.num').style.color = '';
+      centerLabel.querySelector('.label-txt').textContent = 'TRAITS';
+  …
 
 document.getElementById('back-btn').addEventListener('click', clearSelection);
 
