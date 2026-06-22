@@ -7,7 +7,7 @@
 <title>BIG5 パーソナリティ探索</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
+ 
   /* ダークモード強制無効化 */
   html, body, #root {
     color-scheme: light !important;
@@ -20,7 +20,7 @@
       color: #111111 !important;
     }
   }
-
+ 
   :root {
     color-scheme: light !important;
     --openness: #E05A6A;
@@ -34,7 +34,7 @@
     --text: #111111;
     --text-dim: #888888;
   }
-
+ 
   body {
     background: #ffffff !important;
     color: #111111 !important;
@@ -45,7 +45,7 @@
     align-items: center;
     overflow-x: hidden;
   }
-
+ 
   header {
     text-align: center;
     padding: 28px 20px 12px;
@@ -56,7 +56,7 @@
     letter-spacing: 0.12em;
     color: #000000;
   }
-
+ 
   /* ===== WHEEL ===== */
   #wheel-container {
     position: relative;
@@ -76,7 +76,7 @@
   .trait-slice:hover { filter: brightness(1.15); }
   .trait-slice.active { filter: brightness(1.2) drop-shadow(0 0 8px rgba(255,255,255,0.3)); }
   .trait-slice.dimmed { opacity: 0.3; }
-
+ 
   /* center circle */
   #center-label {
     position: absolute;
@@ -104,7 +104,7 @@
     letter-spacing: 0.06em;
     margin-top: 2px;
   }
-
+ 
   /* ===== FACET PANEL ===== */
   #facet-panel {
     width: 100%;
@@ -112,7 +112,7 @@
     padding: 0 16px 16px;
     flex: 1;
   }
-
+ 
   #panel-header {
     display: none;
     align-items: center;
@@ -152,7 +152,7 @@
     transition: background 0.2s;
   }
   #back-btn:hover { background: #DDDDDD; }
-
+ 
   #panel-desc {
     font-size: 0.78rem;
     color: #333333;
@@ -161,13 +161,13 @@
     display: none;
   }
   #panel-desc.visible { display: block; }
-
+ 
   /* Facet Cards */
   #facets-grid {
     display: flex;
     flex-direction: column;
   }
-
+ 
   .facet-card {
     background: var(--accent);
     border-radius: 12px;
@@ -181,12 +181,12 @@
     user-select: none;
   }
   .facet-card:active { filter: brightness(1.08); }
-
+ 
   /* 展開時：常時ハイライト */
   .facet-card.expanded {
     filter: brightness(1.12);
   }
-
+ 
   @keyframes slideIn {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -209,7 +209,7 @@
       padding-bottom: 0;
     }
   }
-
+ 
   .facet-card-header {
     display: flex;
     align-items: center;
@@ -229,7 +229,7 @@
   .facet-card.expanded .facet-name {
     color: #ffffff;
   }
-
+ 
   .facet-arrow {
     margin-left: auto;
     font-size: 0.8rem;
@@ -237,7 +237,7 @@
     transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .facet-card.expanded .facet-arrow { transform: rotate(90deg); }
-
+ 
   /* ファセット詳細：max-heightで展開/収縮 */
   .facet-detail {
     max-height: 0;
@@ -259,14 +259,14 @@
       margin-top 0.35s ease,
       padding-top 0.35s ease;
   }
-
+ 
   .facet-tagline {
     font-size: 0.75rem;
     color: rgba(255,255,255,0.85);
     line-height: 1.55;
     margin-bottom: 10px;
   }
-
+ 
   .level-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -290,7 +290,7 @@
     color: rgba(255,255,255,0.9);
     line-height: 1.5;
   }
-
+ 
   /* Hint at bottom */
   #hint {
     text-align: center;
@@ -307,11 +307,11 @@
 </style>
 </head>
 <body>
-
+ 
 <header>
   <h1>BIG FIVE</h1>
 </header>
-
+ 
 <div id="wheel-container">
   <svg id="wheel-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg"></svg>
   <div id="center-label">
@@ -319,9 +319,9 @@
     <span class="label-txt">TRAITS</span>
   </div>
 </div>
-
+ 
 <p id="hint">各項目をタップして詳しく見る ↑</p>
-
+ 
 <div id="facet-panel">
   <div id="panel-header">
     <div id="panel-dot"></div>
@@ -331,7 +331,7 @@
   <p id="panel-desc"></p>
   <div id="facets-grid"></div>
 </div>
-
+ 
 <script>
 const DATA = {
   openness: {
@@ -436,13 +436,13 @@ const DATA = {
     ]
   }
 };
-
+ 
 const TRAITS = ['openness','extraversion','conscientiousness','neuroticism','agreeableness'];
 const TRAIT_NAMES_SHORT = { openness:'開放性', extraversion:'外向性', conscientiousness:'誠実性', neuroticism:'精神安定性', agreeableness:'協調性' };
-
+ 
 let activeTraitKey = null;
 let expandedFacetIndex = null;
-
+ 
 // ===== Draw SVG Wheel =====
 function buildWheel() {
   const svg = document.getElementById('wheel-svg');
@@ -451,12 +451,12 @@ function buildWheel() {
   const n = TRAITS.length;
   const anglePerSlice = (2 * Math.PI) / n;
   const startOffset = -Math.PI / 2;
-
+ 
   TRAITS.forEach((key, i) => {
     const trait = DATA[key];
     const startAngle = startOffset + i * anglePerSlice + gap / outerR;
     const endAngle = startOffset + (i + 1) * anglePerSlice - gap / outerR;
-
+ 
     const x1 = cx + outerR * Math.cos(startAngle);
     const y1 = cy + outerR * Math.sin(startAngle);
     const x2 = cx + outerR * Math.cos(endAngle);
@@ -465,24 +465,24 @@ function buildWheel() {
     const y3 = cy + innerR * Math.sin(endAngle);
     const x4 = cx + innerR * Math.cos(startAngle);
     const y4 = cy + innerR * Math.sin(startAngle);
-
+ 
     const d = `M ${x1} ${y1} A ${outerR} ${outerR} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 0 0 ${x4} ${y4} Z`;
-
+ 
     const midAngle = startOffset + (i + 0.5) * anglePerSlice;
     const labelR = (outerR + innerR) / 2;
     const lx = cx + labelR * Math.cos(midAngle);
     const ly = cy + labelR * Math.sin(midAngle);
-
+ 
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'trait-slice');
     g.setAttribute('data-key', key);
     g.style.cursor = 'pointer';
-
+ 
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', d);
     path.setAttribute('fill', trait.color);
     g.appendChild(path);
-
+ 
     const name = TRAIT_NAMES_SHORT[key];
     const lines = name.length > 4 ? [name.slice(0,3), name.slice(3)] : [name];
     lines.forEach((line, li) => {
@@ -499,21 +499,21 @@ function buildWheel() {
       t.textContent = line;
       g.appendChild(t);
     });
-
+ 
     g.addEventListener('click', () => selectTrait(key));
     svg.appendChild(g);
   });
 }
-
+ 
 // 収縮：展開の逆（下から順にslideOut、高さも同時に縮むのでスペースが連動して消える）
 // onLastCard: 最後のカードが消えるタイミングで呼ばれるコールバック
 function collapseGrid(callback, onLastCard) {
   const grid = document.getElementById('facets-grid');
   grid.querySelectorAll('.facet-card.expanded').forEach(c => c.classList.remove('expanded'));
-
+ 
   const cards = [...grid.querySelectorAll('.facet-card')].reverse();
   if (!cards.length) { callback(); return; }
-
+ 
   cards.forEach((card, i) => {
     setTimeout(() => {
       card.style.animation = 'none';
@@ -525,13 +525,13 @@ function collapseGrid(callback, onLastCard) {
       }
     }, i * 50);
   });
-
+ 
   setTimeout(() => {
     grid.innerHTML = '';
     callback();
   }, (cards.length - 1) * 50 + 260);
 }
-
+ 
 function selectTrait(key) {
   if (activeTraitKey === key) {
     collapseGrid(() => {
@@ -556,24 +556,24 @@ function selectTrait(key) {
     });
     return;
   }
-
+ 
   const doSelect = () => {
     activeTraitKey = key;
     expandedFacetIndex = null;
-
+ 
     document.querySelectorAll('.trait-slice').forEach(g => {
       const k = g.getAttribute('data-key');
       g.classList.toggle('active', k === key);
       g.classList.toggle('dimmed', k !== key);
     });
-
+ 
     const trait = DATA[key];
     const centerLabel = document.getElementById('center-label');
     centerLabel.style.borderColor = trait.color;
     centerLabel.querySelector('.num').textContent = '6';
     centerLabel.querySelector('.num').style.color = trait.color;
     centerLabel.querySelector('.label-txt').textContent = 'FACETS';
-
+ 
     const header = document.getElementById('panel-header');
     header.classList.add('visible');
     document.getElementById('panel-dot').style.background = trait.color;
@@ -581,13 +581,13 @@ function selectTrait(key) {
     const descEl = document.getElementById('panel-desc');
     descEl.textContent = trait.description;
     descEl.classList.add('visible');
-
+ 
     document.getElementById('hint').classList.add('hidden');
-
+ 
     renderFacets(key);
     document.getElementById('facet-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-
+ 
   if (activeTraitKey) {
     document.getElementById('facets-grid').innerHTML = '';
     doSelect();
@@ -595,7 +595,7 @@ function selectTrait(key) {
     doSelect();
   }
 }
-
+ 
 function clearSelection() {
   collapseGrid(() => {
     activeTraitKey = null;
@@ -618,19 +618,19 @@ function clearSelection() {
     }, 250);
   });
 }
-
+ 
 function renderFacets(key) {
   const trait = DATA[key];
   const grid = document.getElementById('facets-grid');
   grid.innerHTML = '';
-
+ 
   document.documentElement.style.setProperty('--accent', trait.color);
-
+ 
   trait.facets.forEach((facet, i) => {
     const card = document.createElement('div');
     card.className = 'facet-card';
     card.style.animationDelay = `${i * 50}ms`;
-
+ 
     card.innerHTML = `
       <div class="facet-card-header">
         <span class="facet-name">${facet.name}</span>
@@ -650,11 +650,11 @@ function renderFacets(key) {
         </div>
       </div>
     `;
-
+ 
     card.addEventListener('click', () => {
       const wasExpanded = card.classList.contains('expanded');
       const currentExpanded = grid.querySelector('.facet-card.expanded');
-
+ 
       if (currentExpanded && currentExpanded !== card) {
         currentExpanded.classList.remove('expanded');
         setTimeout(() => {
@@ -665,13 +665,13 @@ function renderFacets(key) {
         else card.classList.remove('expanded');
       }
     });
-
+ 
     grid.appendChild(card);
   });
 }
-
+ 
 document.getElementById('back-btn').addEventListener('click', clearSelection);
-
+ 
 buildWheel();
 </script>
 </body>
