@@ -121,6 +121,14 @@
     cursor: pointer;
   }
   #panel-header.visible { display: flex; }
+  #panel-header.hiding {
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  #panel-desc.hiding {
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
   #panel-dot {
     width: 12px; height: 12px;
     border-radius: 50%;
@@ -158,12 +166,6 @@
   #facets-grid {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-  }
-  #facets-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
   }
 
   .facet-card {
@@ -172,6 +174,8 @@
     padding: 12px 14px;
     cursor: pointer;
     border: 1.5px solid transparent;
+    margin-bottom: 8px;
+    overflow: hidden;
     animation: slideIn 0.25s ease both;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
@@ -188,8 +192,22 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes slideOut {
-    from { opacity: 1; transform: translateY(0); }
-    to   { opacity: 0; transform: translateY(-10px); }
+    from {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 200px;
+      margin-bottom: 8px;
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(10px);
+      max-height: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
   }
 
   .facet-card-header {
@@ -319,25 +337,24 @@ const DATA = {
   openness: {
     name: "開放性",
     color: "#E05A6A",
-    icon: "🌈",
     description: "新しい経験・アイデア・美的感覚への好奇心と受容性。高いほど創造的で冒険的、低いほど実用的で安定志向。",
     facets: [
-      { name: "想像力", icon: "💭", desc: "想像力の豊かさを表す",
+      { name: "想像力", desc: "想像力の豊かさを表す",
         high: "想像力が豊かで物語やフィクション、ゲームの世界に没頭できる。アイデアマンで、将来のことを考えるのが好き。",
         low: "現実主義で地に足がついていて、フィクションやファンタジーなどはあまり好きじゃない。" },
-      { name: "美的好奇心", icon: "🎨", desc: "芸術・音楽・文学・自然などへの感受性の高さを表す",
+      { name: "美的好奇心", desc: "芸術・音楽・文学・自然などへの感受性の高さを表す",
         high: "芸術や音楽、ファッション、景色など「美しいもの」が好き。機能性よりもビジュアルやデザイン性重視。",
         low: "デザイン性よりも機能性重視で、芸術分野にはあまり関心がない。" },
-      { name: "感情", icon: "🎭", desc: "自分の感情への敏感さを表す",
+      { name: "感情", desc: "自分の感情への敏感さを表す",
         high: "繊細かつ感情豊かで、自分の細かな心情に敏感。涙もろく、感動系の映画などですく泣く。",
         low: "自分の感情には鈍感で、論理的・現実的で冷静に物事を判断する。感情にはあまり流されない。" },
-      { name: "動的好奇心", icon: "🗺️", desc: "新しい体験や道のものへの挑戦欲求を表す",
+      { name: "動的好奇心", desc: "新しい体験や道のものへの挑戦欲求を表す",
         high: "マンネリ化や退屈が嫌いで、新しいものを求める冒険家気質。新しい場所、新しい食べ物、新しい趣味など、未知の体験に積極的。",
         low: "安定志向で、新しいものより慣れ親しんだものが好き。" },
-      { name: "知的好奇心", icon: "🔬", desc: "知的なものや抽象的な話題への好奇心度合いを表す",
+      { name: "知的好奇心", desc: "知的なものや抽象的な話題への好奇心度合いを表す",
         high: "研究家気質があり、調べ物が好き。哲学や心理学、科学や歴史にも興味がある。考えごとが好き。",
         low: "ライフハックや稼ぎ方など、具体的で実用的な知識が好きで、抽象的で小難しいものはあまり好きじゃない。" },
-      { name: "革新性", icon: "🔧", desc: "既存のルールや伝統へ疑問を持つ度合いを表す",
+      { name: "革新性", desc: "既存のルールや伝統へ疑問を持つ度合いを表す",
         high: "伝統や慣習的なルール、常識が嫌いで、多様性を重んじる。革新的でリベラリスト",
         low: "保守的で伝統を重んじる常識人。" }
     ]
@@ -345,25 +362,24 @@ const DATA = {
   extraversion: {
     name: "外向性",
     color: "#F5933A",
-    icon: "⚡",
     description: "社会的交流からエネルギーを得る傾向。高いほど積極的・社交的、低いほど内省的・単独志向。",
     facets: [
-      { name: "活動性", icon: "🤝", desc: "他者への親しみやすさと親密さ",
+      { name: "活動性", desc: "他者への親しみやすさと親密さ",
         high: "アウトドアで、アクティブなことを好む。生活のペースが早く、常に何かしらの行動を起こす。",
         low: "打ち解けるまでに時間がかかり、最初は距離を置きがちになる。" },
-      { name: "刺激追及", icon: "👥", desc: "刺激に対する欲求",
+      { name: "刺激追及", desc: "刺激に対する欲求",
         high: "スリルが好きで刺激を求める。退屈を嫌う。",
         low: "安定志向で、あまり冒険はしない。平穏な環境を好む。" },
-      { name: "温かさ", icon: "📢", desc: "意見を積極的に発信する傾向",
+      { name: "温かさ", desc: "意見を積極的に発信する傾向",
         high: "人に好意を抱きやすく、人懐っこい。",
         low: "客観的でフォーマルな関係が好き。慎重に関係を構築していくタイプ。" },
-      { name: "自己主張", icon: "🏃", desc: "エネルギーレベルとテンポの速さ",
+      { name: "自己主張", desc: "エネルギーレベルとテンポの速さ",
         high: "目立ちたがり屋。リーダータイプで場を支配するタイプで、意見をハッキリ言える。",
         low: "周囲に合わせたり、聞き役に回ることが多い。" },
-      { name: "社交性", icon: "🎢", desc: "興奮・スリル・リスクへの欲求",
+      { name: "社交性", desc: "興奮・スリル・リスクへの欲求",
         high: "大勢の集まりを好む。ワイワイが好き。人に囲まれていることで安心する。",
         low: "一人が好き。" },
-      { name: "陽気さ", icon: "😄", desc: "喜び・楽しさ・興奮の感じやすさ",
+      { name: "陽気さ", desc: "喜び・楽しさ・興奮の感じやすさ",
         high: "いわゆる「陽気」な人で、よく笑う。素直で明るく楽観的。",
         low: "感情をあまり表には出さず、ゆっくりと噛み締める。大はしゃぎすることがない。" }
     ]
@@ -371,25 +387,24 @@ const DATA = {
   conscientiousness: {
     name: "誠実性",
     color: "#A8CC4A",
-    icon: "🎯",
     description: "目標に向けて計画し、自己コントロールする能力。高いほど勤勉・組織的、低いほど柔軟・自発的。",
     facets: [
-      { name: "有能感", icon: "💪", desc: "自分の能力・有能さへの確信",
+      { name: "有能感", desc: "自分の能力・有能さへの確信",
         high: "「自分ならできる」と自負しており、準備をしっかりするためミスが少ない。難題にも立ち向かう。",
-        low: "⚫︎ LOW「自分にはセンスがない」と感じやすく、準備不足でミスが多い。" },
-      { name: "慎重さ", icon: "📋", desc: "",
+        low: "「自分にはセンスがない」と感じやすく、準備不足でミスが多い。" },
+      { name: "慎重さ", desc: "",
         high: "石橋を叩いて渡る慎重派。スピードよりも正確性重視で、決断に時間はかかるが失敗が少ない。",
         low: "思い立ったら即行動タイプ。ノリで衝動的に動くため、凡ミスをしやすく後悔も多い。" },
-      { name: "達成追及", icon: "✅", desc: "",
+      { name: "達成追及", desc: "",
         high: "成長意欲が強く、常に目標がある。努力家。",
         low: "現状に満足しやすく、マイペース。" },
-      { name: "自己制御", icon: "🏆", desc: "",
+      { name: "自己制御", desc: "",
         high: "誘惑に強く、集中力があって物事を最後までやり遂げられる。ダイエットや筋トレも続きやすい。",
         low: "集中力が無くて気が散りやすく、途中で諦めやすい。三日坊主で先延ばしグセがあり、モチベーション頼り。" },
-      { name: "秩序性", icon: "⏰", desc: "",
+      { name: "秩序性", desc: "",
         high: "整理整頓が好きで、スケジュールや身の回りのものが常に整理されている。几帳面でマメ。",
         low: "散らかった環境でもあまり気にならない。柔軟ではあるがカオスになりがち。" },
-      { name: "責任感", icon: "🔍", desc: "",
+      { name: "責任感", desc: "",
         high: "約束をしっかり守り、責任感が強い。社会的なルールも厳守し、嘘を嫌う。",
         low: "約束を破りがちで、臨機応変に対応する。「まぁいっか」が多い。" }
     ]
@@ -397,53 +412,27 @@ const DATA = {
   neuroticism: {
     name: "精神安定性",
     color: "#4ABDE0",
-    icon: "🌊",
     description: "感情的な安定性・不安定さの度合い。スコアが高いほど安定・穏やか、低いほど不安や感情の波が大きい。",
     facets: [
-      { name: "不安", icon: "😰", desc: "",
-        high: "",
-        low: "" },
-      { name: "怒りっぽさ", icon: "😤", desc: "",
-        high: "",
-        low: "" },
-      { name: "抑うつ性", icon: "🌧️", desc: "",
-        high: "",
-        low: "" },
-      { name: "自意識", icon: "🪞", desc: "",
-        high: "",
-        low: "" },
-      { name: "衝動性", icon: "⚡", desc: "",
-        high: "",
-        low: "" },
-      { name: "傷つきやすさ", icon: "🫧", desc: "",
-        high: "",
-        low: "" }
+      { name: "不安", desc: "", high: "", low: "" },
+      { name: "怒りっぽさ", desc: "", high: "", low: "" },
+      { name: "抑うつ性", desc: "", high: "", low: "" },
+      { name: "自意識", desc: "", high: "", low: "" },
+      { name: "衝動性", desc: "", high: "", low: "" },
+      { name: "傷つきやすさ", desc: "", high: "", low: "" }
     ]
   },
   agreeableness: {
     name: "協調性",
     color: "#8B5FC5",
-    icon: "💜",
     description: "他者への共感・思いやり・協力の度合い。高いほど温和・利他的、低いほど競争的・懐疑的。",
     facets: [
-      { name: "信頼性", icon: "🤲", desc: "",
-        high: "",
-        low: "" },
-      { name: "実直性", icon: "💎", desc: "",
-        high: "",
-        low: "" },
-      { name: "利他性", icon: "🎁", desc: "",
-        high: "",
-        low: "" },
-      { name: "協力性", icon: "🤜", desc: "",
-        high: "",
-        low: "" },
-      { name: "謙虚さ", icon: "🙏", desc: "",
-        high: "",
-        low: "" },
-      { name: "優しさ", icon: "💖", desc: "",
-        high: "",
-        low: "" }
+      { name: "信頼性", desc: "", high: "", low: "" },
+      { name: "実直性", desc: "", high: "", low: "" },
+      { name: "利他性", desc: "", high: "", low: "" },
+      { name: "協力性", desc: "", high: "", low: "" },
+      { name: "謙虚さ", desc: "", high: "", low: "" },
+      { name: "優しさ", desc: "", high: "", low: "" }
     ]
   }
 };
@@ -494,7 +483,6 @@ function buildWheel() {
     path.setAttribute('fill', trait.color);
     g.appendChild(path);
 
-    // Label text (split long names)
     const name = TRAIT_NAMES_SHORT[key];
     const lines = name.length > 4 ? [name.slice(0,3), name.slice(3)] : [name];
     lines.forEach((line, li) => {
@@ -517,47 +505,35 @@ function buildWheel() {
   });
 }
 
-// 下から上へ順番にmax-heightで畳む（スペースが縮んで画面が自然に上に戻る）
-function collapseGrid(callback) {
+// 収縮：展開の逆（下から順にslideOut、高さも同時に縮むのでスペースが連動して消える）
+// onLastCard: 最後のカードが消えるタイミングで呼ばれるコールバック
+function collapseGrid(callback, onLastCard) {
   const grid = document.getElementById('facets-grid');
-  const cards = Array.from(grid.children);
-  if (!cards.length) { callback(); return; }
-
-  // 開いているファセット詳細を先に閉じる
   grid.querySelectorAll('.facet-card.expanded').forEach(c => c.classList.remove('expanded'));
 
-  const stagger = 60;   // カード間の遅延
-  const duration = 250; // 各カードの収縮時間
+  const cards = [...grid.querySelectorAll('.facet-card')].reverse();
+  if (!cards.length) { callback(); return; }
 
   cards.forEach((card, i) => {
-    const reverseIndex = cards.length - 1 - i; // 下から順
-    const delay = reverseIndex * stagger;
-
-    // 現在の高さを固定してからmax-height:0へ
-    const h = card.offsetHeight;
-    card.style.overflow = 'hidden';
-    card.style.maxHeight = h + 'px';
-    card.style.marginBottom = '0';
-    card.style.transition = 'none';
-
     setTimeout(() => {
-      card.style.transition = `max-height ${duration}ms cubic-bezier(0.4, 0, 1, 1), margin-top ${duration}ms ease, opacity ${duration}ms ease`;
-      card.style.maxHeight = '0';
-      card.style.marginTop = '0';
-      card.style.opacity = '0';
-    }, delay);
+      card.style.animation = 'none';
+      void card.offsetHeight;
+      card.style.animation = 'slideOut 0.25s ease forwards';
+      // 最後のカードと同時にonLastCardを呼ぶ
+      if (i === cards.length - 1 && onLastCard) {
+        onLastCard();
+      }
+    }, i * 50);
   });
 
-  const totalTime = (cards.length - 1) * stagger + duration;
   setTimeout(() => {
     grid.innerHTML = '';
     callback();
-  }, totalTime + 50);
+  }, (cards.length - 1) * 50 + 260);
 }
 
 function selectTrait(key) {
   if (activeTraitKey === key) {
-    // 同じ因子タップ → 収縮モーション付きで閉じてからトップへ戻る
     collapseGrid(() => {
       activeTraitKey = null;
       expandedFacetIndex = null;
@@ -567,9 +543,16 @@ function selectTrait(key) {
       centerLabel.querySelector('.num').textContent = '5';
       centerLabel.querySelector('.num').style.color = '';
       centerLabel.querySelector('.label-txt').textContent = 'TRAITS';
-      document.getElementById('panel-header').classList.remove('visible');
-      document.getElementById('panel-desc').classList.remove('visible');
       document.getElementById('hint').classList.remove('hidden');
+    }, () => {
+      const header = document.getElementById('panel-header');
+      const desc = document.getElementById('panel-desc');
+      header.classList.add('hiding');
+      desc.classList.add('hiding');
+      setTimeout(() => {
+        header.classList.remove('visible', 'hiding');
+        desc.classList.remove('visible', 'hiding');
+      }, 250);
     });
     return;
   }
@@ -606,7 +589,6 @@ function selectTrait(key) {
   };
 
   if (activeTraitKey) {
-    // 別の因子タップ → 即座にグリッドをクリアして切り替え（収縮モーションなし）
     document.getElementById('facets-grid').innerHTML = '';
     doSelect();
   } else {
@@ -615,7 +597,6 @@ function selectTrait(key) {
 }
 
 function clearSelection() {
-  // 戻るボタン → 収縮モーション付きで閉じてからトップへ戻る
   collapseGrid(() => {
     activeTraitKey = null;
     expandedFacetIndex = null;
@@ -625,9 +606,16 @@ function clearSelection() {
     centerLabel.querySelector('.num').textContent = '5';
     centerLabel.querySelector('.num').style.color = '';
     centerLabel.querySelector('.label-txt').textContent = 'TRAITS';
-    document.getElementById('panel-header').classList.remove('visible');
-    document.getElementById('panel-desc').classList.remove('visible');
     document.getElementById('hint').classList.remove('hidden');
+  }, () => {
+    const header = document.getElementById('panel-header');
+    const desc = document.getElementById('panel-desc');
+    header.classList.add('hiding');
+    desc.classList.add('hiding');
+    setTimeout(() => {
+      header.classList.remove('visible', 'hiding');
+      desc.classList.remove('visible', 'hiding');
+    }, 250);
   });
 }
 
@@ -636,7 +624,6 @@ function renderFacets(key) {
   const grid = document.getElementById('facets-grid');
   grid.innerHTML = '';
 
-  // Set CSS accent
   document.documentElement.style.setProperty('--accent', trait.color);
 
   trait.facets.forEach((facet, i) => {
@@ -669,13 +656,11 @@ function renderFacets(key) {
       const currentExpanded = grid.querySelector('.facet-card.expanded');
 
       if (currentExpanded && currentExpanded !== card) {
-        // 別のカードが開いている → 先に閉じてから開く
         currentExpanded.classList.remove('expanded');
         setTimeout(() => {
           if (!wasExpanded) card.classList.add('expanded');
         }, 200);
       } else {
-        // 同じカード or 何も開いていない → 即トグル
         if (!wasExpanded) card.classList.add('expanded');
         else card.classList.remove('expanded');
       }
